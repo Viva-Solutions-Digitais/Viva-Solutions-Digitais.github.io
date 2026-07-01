@@ -1,1139 +1,301 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TORRE APK | Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-body:      #080a10;
-            --bg-card:      #0e1118;
-            --bg-elevated:  #141720;
-            --bg-hover:     #1a1e2a;
-            --accent:       #e11d48;
-            --accent-hover: #be123c;
-            --accent-glow:  rgba(225,29,72,0.18);
-            --gold:         #f59e0b;
-            --gold-muted:   rgba(245,158,11,0.12);
-            --green:        #10b981;
-            --green-muted:  rgba(16,185,129,0.1);
-            --red:          #ef4444;
-            --red-muted:    rgba(239,68,68,0.1);
-            --blue:         #3b82f6;
-            --text-main:    #e8eaf0;
-            --text-muted:   #6b7280;
-            --text-dim:     #374151;
-            --border:       rgba(255,255,255,0.06);
-            --border-hover: rgba(255,255,255,0.12);
-            --wpp:          #25D366;
-            --radius:       10px;
-            --radius-lg:    16px;
-        }
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'Syne', sans-serif;
-            background: var(--bg-body);
-            color: var(--text-main);
-            padding: 20px;
-            -webkit-font-smoothing: antialiased;
-            min-height: 100vh;
-            background-image:
-                linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-        .mono { font-family: 'JetBrains Mono', monospace; }
-        .text-accent { color: var(--accent); }
-        .text-gold   { color: var(--gold); }
-        .text-green  { color: var(--green); }
-        .text-red    { color: var(--red); }
-        .text-muted  { color: var(--text-muted); }
-
-        #loadingGlobal {
-            position: fixed; inset: 0;
-            background: rgba(8,10,16,0.88);
-            display: none; justify-content: center; align-items: center;
-            z-index: 9999; backdrop-filter: blur(4px);
-        }
-        .loader-ring {
-            width: 44px; height: 44px;
-            border: 3px solid var(--border-hover);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-
-        #toast {
-            position: fixed; bottom: 24px; right: 24px;
-            background: var(--bg-elevated);
-            padding: 13px 18px;
-            border-radius: var(--radius);
-            border: 1px solid var(--border-hover);
-            border-left: 3px solid var(--green);
-            display: none; z-index: 10000;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-            font-size: 0.875rem; font-weight: 600;
-            animation: slideUp 0.25s ease;
-            max-width: 320px;
-        }
-        @keyframes slideUp { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-
-        #loginOverlay {
-            position: fixed; inset: 0;
-            background: var(--bg-body);
-            z-index: 9999;
-            display: flex; justify-content: center; align-items: center;
-            padding: 20px;
-        }
-        .login-box {
-            background: var(--bg-card);
-            padding: 48px 40px;
-            border-radius: var(--radius-lg);
-            border: 1px solid var(--border-hover);
-            text-align: center;
-            width: 100%; max-width: 380px;
-            box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px var(--border);
-        }
-        .login-logo { font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 8px; }
-        .login-sub  { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 36px; }
-        .login-box input {
-            width: 100%; padding: 14px 18px;
-            border-radius: var(--radius); border: 1px solid var(--border-hover);
-            background: var(--bg-body); color: var(--text-main);
-            margin-bottom: 14px; text-align: center;
-            outline: none; font-size: 1rem; font-family: 'Syne', sans-serif;
-            transition: border-color 0.2s;
-        }
-        .login-box input:focus { border-color: var(--accent); }
-        #login-erro {
-            color: var(--red); font-size: 0.82rem;
-            margin-top: 12px; display: none;
-            background: var(--red-muted);
-            padding: 10px 14px; border-radius: 6px;
-            border: 1px solid rgba(239,68,68,0.25);
-        }
-
-        .header {
-            display: flex; justify-content: space-between; align-items: center;
-            background: var(--bg-card);
-            padding: 14px 24px;
-            border-radius: var(--radius-lg);
-            margin-bottom: 20px;
-            border: 1px solid var(--border);
-        }
-        .header-brand { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.5px; }
-        .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        input[type="date"] {
-            background: var(--bg-body); color: var(--text-main);
-            border: 1px solid var(--border-hover);
-            padding: 8px 12px; border-radius: var(--radius);
-            font-family: 'Syne', sans-serif; font-size: 0.85rem;
-            outline: none; transition: border-color 0.2s;
-        }
-        input[type="date"]:focus { border-color: var(--accent); }
-
-        #alertaPendencias {
-            display: none;
-            background: rgba(245,158,11,0.07);
-            border: 1px solid rgba(245,158,11,0.3);
-            border-radius: var(--radius);
-            padding: 12px 18px; margin-bottom: 20px;
-            font-size: 0.85rem; color: var(--gold); font-weight: 600;
-        }
-
-        .kpi-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 20px; }
-        .kpi {
-            background: var(--bg-card);
-            padding: 22px 18px; border-radius: var(--radius-lg);
-            text-align: center; border: 1px solid var(--border);
-            transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
-        }
-        .kpi h2 { font-size: 2rem; margin: 8px 0 0; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
-        .kpi small { color: var(--text-muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .kpi-clicavel { cursor: pointer; }
-        .kpi-clicavel:hover { transform: translateY(-3px); border-color: var(--border-hover); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
-        .kpi-emitidas   { border-bottom: 3px solid var(--green); }
-        .kpi-canceladas { border-bottom: 3px solid var(--red); }
-        .kpi-pendentes  { border-bottom: 3px solid var(--gold); }
-
-        .lista-suspensa {
-            display: none; background: var(--bg-card);
-            border-radius: var(--radius-lg); padding: 24px;
-            border: 1px solid var(--border); margin-bottom: 20px;
-            animation: fadeIn 0.2s ease;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-        .lista-suspensa h3 { margin-top: 0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1.5px; border-bottom: 1px solid var(--border); padding-bottom: 14px; margin-bottom: 18px; }
-
-        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-        table { width: 100%; border-collapse: collapse; min-width: 560px; }
-        th { color: var(--text-muted); text-align: left; padding: 9px 12px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid var(--border); font-weight: 700; }
-        td { padding: 11px 12px; border-bottom: 1px solid var(--border); font-size: 0.875rem; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: var(--bg-hover); }
-
-        .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 20px; }
-        .ranking-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; padding: 10px 12px; background: var(--bg-elevated); border-radius: 8px; border: 1px solid var(--border); transition: transform 0.15s, border-color 0.15s; }
-        .ranking-item:hover { transform: translateX(3px); border-color: var(--border-hover); }
-        .rank-pos   { font-weight: 700; font-size: 0.8rem; color: var(--gold); width: 28px; text-align: center; font-family: 'JetBrains Mono', monospace; }
-        .rank-info  { flex: 1; min-width: 0; }
-        .rank-title { font-size: 0.78rem; color: var(--text-main); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .rank-bar   { height: 3px; background: var(--border); border-radius: 10px; margin-top: 6px; }
-        .rank-fill  { height: 3px; border-radius: 10px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
-        .rank-value { font-weight: 700; color: var(--text-main); font-size: 0.875rem; font-family: 'JetBrains Mono', monospace; }
-        .btn-ver-mais { width: 100%; background: transparent; border: 1px dashed var(--border-hover); color: var(--text-muted); padding: 10px; border-radius: 8px; font-weight: 600; cursor: pointer; transition: 0.2s; margin-top: 8px; font-family: 'Syne', sans-serif; font-size: 0.8rem; }
-        .btn-ver-mais:hover { background: var(--bg-hover); color: var(--text-main); border-color: var(--text-muted); }
-
-        .search-area { background: var(--bg-card); padding: 20px; border-radius: var(--radius-lg); display: flex; gap: 12px; margin-bottom: 20px; border: 1px solid var(--border); }
-        .search-area input { flex: 1; padding: 13px 18px; background: var(--bg-body); border: 1px solid var(--border-hover); color: var(--text-main); border-radius: var(--radius); font-size: 1rem; font-family: 'JetBrains Mono', monospace; outline: none; transition: border-color 0.2s; letter-spacing: 1px; }
-        .search-area input:focus { border-color: var(--accent); }
-        .search-area input::placeholder { font-family: 'Syne', sans-serif; letter-spacing: 0; font-size: 0.9rem; }
-
-        .btn { padding: 0 28px; height: 46px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); cursor: pointer; font-weight: 700; font-size: 0.875rem; transition: background 0.2s, transform 0.1s, box-shadow 0.2s; font-family: 'Syne', sans-serif; white-space: nowrap; display: inline-flex; align-items: center; justify-content: center; }
-        .btn:hover:not(:disabled) { background: var(--accent-hover); box-shadow: 0 0 20px var(--accent-glow); }
-        .btn:active:not(:disabled) { transform: scale(0.97); }
-        .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-        .btn-outline { background: transparent; border: 1px solid var(--border-hover); color: var(--text-muted); }
-        .btn-outline:hover:not(:disabled) { background: var(--bg-hover); color: var(--text-main); box-shadow: none; }
-        .btn-gold { background: transparent; border: 1px solid rgba(245,158,11,0.4); color: var(--gold); }
-        .btn-gold:hover:not(:disabled) { background: var(--gold-muted); box-shadow: 0 0 16px rgba(245,158,11,0.15); }
-
-        .ficha { display: none; background: var(--bg-card); border-radius: var(--radius-lg); padding: 28px; border: 1px solid var(--border); animation: fadeIn 0.2s ease; }
-        .ficha-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 18px; }
-        .ficha-lh { font-size: 1.8rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-        .ficha-data-label { color: var(--text-muted); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 4px; }
-        .ficha-data-val   { font-weight: 700; font-size: 1rem; font-family: 'JetBrains Mono', monospace; }
-
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-        .info-box { background: var(--bg-elevated); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border); }
-        .info-box label { color: var(--text-muted); font-size: 0.7rem; display: block; margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .info-box div   { font-size: 1rem; color: var(--text-main); font-weight: 600; }
-
-        .financeiro-box { background: var(--gold-muted); border: 1px dashed rgba(245,158,11,0.3); border-radius: var(--radius); padding: 18px; margin-top: 18px; display: none; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .financeiro-box label { color: var(--gold); font-size: 0.7rem; font-weight: 700; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
-        .financeiro-val { font-size: 1.4rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
-
-        .workflow-secao { margin-top: 20px; display: flex; gap: 10px; }
-        .btn-emissao { background: var(--bg-elevated); border: 1px solid var(--border-hover); color: var(--text-muted); padding: 14px 10px; border-radius: var(--radius); font-weight: 700; cursor: pointer; flex: 1; transition: all 0.2s ease; text-align: center; font-family: 'Syne', sans-serif; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .btn-emissao:hover:not(:disabled) { border-color: var(--gold); color: var(--gold); background: var(--gold-muted); }
-        .btn-emissao.ok { background: var(--green-muted); border-color: rgba(16,185,129,0.4); color: var(--green); cursor: not-allowed; }
-        .btn-emissao:disabled:not(.ok) { opacity: 0.3; cursor: not-allowed; }
-
-        .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'JetBrains Mono', monospace; }
-        .badge-red   { background: var(--red-muted);  color: var(--red);  border: 1px solid rgba(239,68,68,0.3); }
-        .badge-muted { background: var(--bg-elevated); color: var(--text-muted); border: 1px solid var(--border); }
-
-        .download-area { margin-top: 18px; display: none; background: var(--bg-elevated); border: 1px solid var(--border-hover); padding: 16px 20px; border-radius: var(--radius); justify-content: space-between; align-items: center; gap: 12px; }
-        .download-area .file-info div:first-child { font-weight: 600; font-size: 0.875rem; margin-bottom: 4px; }
-        .download-area .file-info div:last-child   { font-size: 0.78rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
-        .error-box { margin-top: 18px; display: none; color: var(--red); text-align: center; padding: 14px; background: var(--red-muted); border: 1px solid rgba(239,68,68,0.25); border-radius: var(--radius); font-weight: 600; font-size: 0.875rem; }
-        .sync-box  { margin-top: 18px; display: none; text-align: center; color: var(--text-muted); font-weight: 600; font-size: 0.875rem; padding: 12px; }
-
-        .obs-box { margin-top: 18px; background: var(--bg-elevated); border: 1px solid var(--border-hover); border-radius: var(--radius); padding: 18px 20px; }
-        .obs-box.parada { background: rgba(239,68,68,0.06); border-color: rgba(239,68,68,0.35); animation: paradaPulse 2s ease-in-out infinite; }
-        @keyframes paradaPulse { 0%,100%{border-color:rgba(239,68,68,0.35);}50%{border-color:rgba(239,68,68,0.7);box-shadow:0 0 16px rgba(239,68,68,0.15);} }
-        .obs-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 10px; }
-        .obs-title  { font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); }
-        .parada-toggle { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
-        .parada-toggle input[type="checkbox"] { display: none; }
-        .parada-switch { width: 38px; height: 20px; background: var(--bg-body); border: 1px solid var(--border-hover); border-radius: 20px; position: relative; transition: background 0.2s, border-color 0.2s; }
-        .parada-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; border-radius: 50%; background: var(--text-muted); transition: transform 0.2s, background 0.2s; }
-        .parada-toggle input:checked + .parada-switch { background: rgba(239,68,68,0.2); border-color: var(--red); }
-        .parada-toggle input:checked + .parada-switch::after { transform: translateX(18px); background: var(--red); }
-        .parada-label { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); transition: color 0.2s; }
-        .parada-toggle input:checked ~ .parada-label { color: var(--red); }
-        .obs-textarea { width: 100%; background: var(--bg-body); border: 1px solid var(--border-hover); border-radius: 8px; color: var(--text-main); padding: 12px 14px; font-family: 'Syne', sans-serif; font-size: 0.875rem; resize: none; outline: none; transition: border-color 0.2s; min-height: 72px; }
-        .obs-textarea:focus { border-color: var(--accent); }
-        .obs-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-        .obs-meta   { font-size: 0.7rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
-        .badge-parada { display: inline-flex; align-items: center; gap: 5px; background: rgba(239,68,68,0.12); color: var(--red); border: 1px solid rgba(239,68,68,0.3); padding: 3px 9px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; animation: paradaPulse 2s ease-in-out infinite; }
-        .badge-obs   { display: inline-flex; align-items: center; gap: 5px; background: rgba(59,130,246,0.1); color: var(--blue); border: 1px solid rgba(59,130,246,0.25); padding: 3px 9px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; }
-
-        #modalAuditoria { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 10000; display: none; padding: 20px; overflow-y: auto; backdrop-filter: blur(4px); }
-        .auditoria-box { background: var(--bg-card); padding: 28px; border-radius: var(--radius-lg); border: 1px solid rgba(245,158,11,0.3); max-width: 960px; margin: 0 auto; width: 100%; }
-        .auditoria-filters { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; align-items: flex-end; }
-        .auditoria-filters label { font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 5px; }
-
-        #email-timer { font-size: 0.68rem; color: var(--text-dim); margin-left: 6px; font-family: 'JetBrains Mono', monospace; }
-
-        @media (max-width: 900px) { .kpi-row { grid-template-columns: repeat(3,1fr); } .grid { grid-template-columns: repeat(2,1fr); } .ranking-grid { grid-template-columns: 1fr; } }
-        @media (max-width: 600px) {
-            body { padding: 10px; }
-            .header { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
-            .controls { width: 100%; flex-wrap: wrap; gap: 8px; }
-            .controls .btn { flex: 1; min-width: 120px; font-size: 0.78rem; padding: 0 12px; height: 38px; }
-            .kpi-row { grid-template-columns: 1fr 1fr; gap: 8px; }
-            .kpi-row .kpi:last-child { grid-column: span 2; }
-            .kpi { padding: 14px; }
-            .kpi h2 { font-size: 1.6rem; }
-            .search-area { flex-direction: column; padding: 14px; }
-            .search-area .btn { width: 100%; height: 48px; }
-            .ficha { padding: 18px; }
-            .ficha-header { flex-direction: column; align-items: flex-start; gap: 12px; }
-            .grid { grid-template-columns: 1fr; }
-            .info-box { grid-column: span 1 !important; }
-            .financeiro-box { grid-template-columns: 1fr; }
-            .workflow-secao { flex-direction: column; gap: 8px; }
-            .login-box { padding: 32px 20px; }
-            .auditoria-box { padding: 16px; }
-            .auditoria-filters { flex-direction: column; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ViVa Soluções Digital | Automação e Inteligência Corporativa</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    a,a:link,a:visited,a:hover,a:active{color:inherit;text-decoration:none;}
+    :root{
+      --ink:#080b12;--ink-card:#0d1017;--ink-raised:#131820;
+      --border:rgba(255,255,255,0.07);--border-hi:rgba(255,255,255,0.15);
+      --crimson:#c0392b;--cyan-dim:rgba(192,57,43,0.12);--cyan-glow:rgba(192,57,43,0.30);
+      --green:#922b21;--green-dim:rgba(146,43,33,0.12);
+      --text:#edf2f7;--muted:#64748b;--label:#94a3b8;
+      --font:'Inter',system-ui,sans-serif;--display:'Space Grotesk',system-ui,sans-serif;
+      --r:14px;--r-lg:22px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--font);background:var(--ink);color:var(--text);line-height:1.65;overflow-x:hidden;}
+    a{text-decoration:none;color:inherit;}
+    a:visited{color:inherit;}
+    img{display:block;max-width:100%;}
+    body::before{content:'';position:fixed;inset:0;z-index:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");pointer-events:none;}
+    .ambient{position:fixed;top:-30vh;left:50%;transform:translateX(-50%);width:900px;height:600px;background:radial-gradient(ellipse,rgba(192,57,43,0.07) 0%,transparent 70%);pointer-events:none;z-index:0;}
+    header{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,80px);height:68px;background:rgba(8,11,18,0.82);backdrop-filter:blur(18px);border-bottom:1px solid var(--border);}
+    .logo{font-family:var(--display);font-size:1.25rem;font-weight:700;letter-spacing:-0.3px;color:var(--text);}
+    .logo em{font-style:normal;color:#e74c3c;}
+    .logo-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--crimson);margin-left:3px;vertical-align:middle;animation:pulse 2s ease-in-out infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
+    nav{display:flex;align-items:center;gap:6px;}
+    nav a{color:#94a3b8 !important;font-size:0.82rem;font-weight:500;padding:8px 16px;border-radius:8px;transition:color 0.2s,background 0.2s;letter-spacing:0.2px;}
+    nav a:hover{color:var(--text) !important;background:var(--border);}
+    .btn-header{background:linear-gradient(135deg,#c0392b,#7b1a14);color:#fff !important;font-weight:700 !important;font-size:0.82rem !important;padding:9px 20px !important;border-radius:8px;letter-spacing:0.3px;transition:box-shadow 0.25s,transform 0.15s !important;}
+    .btn-header:hover{box-shadow:0 0 20px rgba(192,57,43,0.30);transform:translateY(-1px) !important;background:linear-gradient(135deg,#c0392b,#922b21) !important;}
+    .mob-nav{display:none;}
+    .mob-menu-btn{display:none;}
+    .hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:140px clamp(20px,6vw,120px) 80px;}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.22);border-radius:100px;padding:6px 18px;font-size:0.72rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--crimson);margin-bottom:32px;}
+    .hero-eyebrow span{width:6px;height:6px;border-radius:50%;background:#c0392b;animation:pulse 2s ease-in-out infinite;}
+    .hero h1{font-family:var(--display);font-size:clamp(2rem,5.5vw,4.2rem);font-weight:700;line-height:1.08;letter-spacing:-1.5px;max-width:900px;margin-bottom:24px;}
+    .hero h1 .grad{background:linear-gradient(110deg,#e74c3c 0%,#6e1a14 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .hero-sub{font-size:clamp(0.95rem,1.4vw,1.1rem);color:var(--label);max-width:640px;margin-bottom:48px;line-height:1.75;}
+    .hero-actions{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:80px;}
+    .btn-primary{background:linear-gradient(135deg,#c0392b,#922b21);color:#fff;font-weight:700;font-size:0.9rem;padding:14px 32px;border-radius:var(--r);letter-spacing:0.2px;transition:transform 0.2s,box-shadow 0.25s;cursor:pointer;display:inline-block;}
+    .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(192,57,43,0.30);}
+    .btn-ghost{background:transparent;color:#edf2f7 !important;font-weight:600;font-size:0.9rem;padding:13px 32px;border-radius:var(--r);border:1px solid rgba(255,255,255,0.15);transition:border-color 0.2s,color 0.2s,transform 0.2s;display:inline-flex;align-items:center;gap:8px;}
+    .btn-ghost:hover{border-color:#c0392b;color:#e74c3c !important;transform:translateY(-2px);}
+    .hero-stats{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;background:var(--ink-card);}
+    .stat{padding:20px 40px;text-align:center;border-right:1px solid var(--border);}
+    .stat:last-child{border-right:none;}
+    .stat-val{font-family:var(--display);font-size:1.9rem;font-weight:700;color:var(--text);letter-spacing:-1px;line-height:1;}
+    .stat-val em{font-style:normal;color:#e74c3c;}
+    .stat-lbl{font-size:0.72rem;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px;}
+    .marquee-wrap{position:relative;z-index:1;background:var(--ink-raised);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:14px 0;overflow:hidden;}
+    .marquee-track{display:flex;gap:48px;animation:marquee 28s linear infinite;white-space:nowrap;width:max-content;}
+    .marquee-track span{font-size:0.75rem;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:12px;}
+    .marquee-track span::before{content:'';display:inline-block;width:4px;height:4px;border-radius:50%;background:#c0392b;opacity:0.6;}
+    @keyframes marquee{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+    section{position:relative;z-index:1;}
+    .section-wrap{max-width:1200px;margin:0 auto;padding:100px clamp(20px,5vw,80px);}
+    .section-eyebrow{font-size:0.7rem;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#e74c3c;margin-bottom:14px;}
+    .section-title{font-family:var(--display);font-size:clamp(1.7rem,3.5vw,2.8rem);font-weight:700;letter-spacing:-1px;line-height:1.15;margin-bottom:16px;}
+    .section-sub{color:var(--label);font-size:1rem;max-width:560px;line-height:1.7;}
+    .services-section{background:var(--ink-card);border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+    .services-header{display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap;margin-bottom:60px;}
+    .cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px;}
+    .card{background:var(--ink);border:1px solid var(--border);border-radius:var(--r-lg);padding:28px;transition:border-color 0.3s,transform 0.3s,box-shadow 0.3s;cursor:default;position:relative;overflow:hidden;}
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#c0392b,transparent);opacity:0;transition:opacity 0.3s;}
+    .card:hover{border-color:rgba(192,57,43,0.35);transform:translateY(-6px);box-shadow:0 20px 48px rgba(0,0,0,0.4),0 0 0 1px rgba(192,57,43,0.10);}
+    .card:hover::before{opacity:1;}
+    .card-icon-wrap{width:46px;height:46px;border-radius:12px;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.2);display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:20px;}
+    .card h3{font-family:var(--display);font-size:1rem;font-weight:600;color:var(--text);margin-bottom:8px;letter-spacing:-0.2px;}
+    .card p{font-size:0.83rem;color:var(--muted);line-height:1.6;}
+    .card-tag{display:inline-block;margin-top:16px;font-size:0.67rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#e74c3c;background:rgba(192,57,43,0.12);border-radius:4px;padding:3px 10px;}
+    .why-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+    .why-list{display:flex;flex-direction:column;gap:24px;margin-top:40px;}
+    .why-item{display:flex;gap:16px;align-items:flex-start;}
+    .why-num{flex-shrink:0;width:36px;height:36px;border-radius:10px;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.25);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:0.8rem;font-weight:700;color:#c0392b;}
+    .why-text h4{font-size:0.95rem;font-weight:600;margin-bottom:4px;}
+    .why-text p{font-size:0.82rem;color:var(--muted);line-height:1.6;}
+    .cta-card{background:var(--ink-raised);border:1px solid var(--border);border-radius:var(--r-lg);padding:48px;display:flex;flex-direction:column;gap:24px;position:relative;overflow:hidden;}
+    .cta-card::after{content:'';position:absolute;bottom:-80px;right:-80px;width:240px;height:240px;border-radius:50%;background:radial-gradient(circle,rgba(192,57,43,0.13),transparent 70%);}
+    .cta-card-label{font-size:0.7rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#e74c3c;}
+    .cta-card h3{font-family:var(--display);font-size:1.6rem;font-weight:700;letter-spacing:-0.5px;line-height:1.2;}
+    .cta-card p{font-size:0.85rem;color:var(--label);line-height:1.7;}
+    .process-section{background:var(--ink);}
+    .steps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:2px;background:var(--border);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;margin-top:60px;}
+    .step{background:var(--ink-card);padding:32px 28px;}
+    .step-num{font-family:var(--display);font-size:2.2rem;font-weight:700;color:var(--border-hi);line-height:1;margin-bottom:16px;letter-spacing:-2px;}
+    .step h4{font-size:0.95rem;font-weight:600;margin-bottom:8px;}
+    .step p{font-size:0.8rem;color:var(--muted);line-height:1.6;}
+    .cta-final{background:var(--ink-card);border-top:1px solid var(--border);}
+    .cta-final-inner{text-align:center;max-width:640px;margin:0 auto;padding:100px clamp(20px,5vw,80px);}
+    .cta-final h2{font-family:var(--display);font-size:clamp(1.8rem,4vw,3rem);font-weight:700;letter-spacing:-1px;line-height:1.1;margin-bottom:16px;}
+    .cta-final p{color:var(--label);font-size:1rem;line-height:1.75;margin-bottom:40px;}
+    .btn-wa{display:inline-flex;align-items:center;gap:10px;background:#25d366;color:#fff;font-weight:700;font-size:0.95rem;padding:15px 36px;border-radius:var(--r);transition:transform 0.2s,box-shadow 0.25s;}
+    .btn-wa:hover{transform:translateY(-2px);box-shadow:0 14px 36px rgba(37,211,102,0.3);}
+    .btn-wa svg{width:20px;height:20px;fill:#fff;}
+    footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:32px clamp(20px,5vw,80px);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+    .footer-logo{font-family:var(--display);font-size:1rem;font-weight:700;color:var(--text);}
+    .footer-logo em{font-style:normal;color:var(--crimson);}
+    footer small{font-size:0.75rem;color:var(--muted);}
+    .footer-links{display:flex;gap:24px;}
+    .footer-links a{font-size:0.78rem;color:#64748b !important;transition:color 0.2s;}
+    .footer-links a:hover{color:#edf2f7 !important;}
+    #sales-modal{position:fixed;inset:0;z-index:200;background:rgba(8,11,18,0.88);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;opacity:0;visibility:hidden;transition:opacity 0.25s,visibility 0.25s;}
+    #sales-modal.active{opacity:1;visibility:visible;}
+    .modal-box{background:var(--ink-card);border:1px solid var(--border-hi);border-radius:var(--r-lg);padding:48px 40px;max-width:480px;width:90%;text-align:center;position:relative;}
+    .modal-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(192,57,43,0.12);border:1px solid rgba(192,57,43,0.25);border-radius:100px;padding:5px 16px;font-size:0.7rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#e74c3c;margin-bottom:24px;}
+    .modal-box h3{font-family:var(--display);font-size:1.5rem;font-weight:700;letter-spacing:-0.5px;margin-bottom:12px;}
+    .modal-box p{font-size:0.88rem;color:var(--label);line-height:1.7;margin-bottom:32px;}
+    .btn-demo{display:block;width:100%;padding:14px;background:#25d366;color:#fff;border-radius:var(--r);font-weight:700;font-size:0.9rem;margin-bottom:12px;transition:transform 0.2s,box-shadow 0.25s;}
+    .btn-demo:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(37,211,102,0.3);}
+    .btn-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:0.82rem;font-weight:500;font-family:var(--font);transition:color 0.2s;padding:8px;}
+    .btn-close:hover{color:var(--text);}
+    /* RESPONSIVO */
+    @media(max-width:768px){
+      .mob-menu-btn{display:flex !important;align-items:center;justify-content:center;width:38px;height:38px;background:var(--ink-raised);border:1px solid var(--border);border-radius:8px;cursor:pointer;flex-direction:column;gap:5px;margin-left:10px;}
+      .mob-menu-btn span{display:block;width:18px;height:2px;background:var(--text);border-radius:2px;}
+      .nav-links{display:none !important;}
+      .mob-nav{flex-direction:column;position:fixed;top:68px;left:0;right:0;background:rgba(8,11,18,0.98);border-bottom:1px solid var(--border);padding:20px;gap:8px;z-index:99;transform:translateY(-110%);transition:transform 0.3s ease;}
+      .mob-nav.open{transform:translateY(0);display:flex !important;}
+      .mob-nav a{color:#94a3b8 !important;font-size:0.9rem;font-weight:500;padding:12px 16px;border-radius:8px;display:block;}
+      .mob-nav a:hover{color:#fff !important;background:rgba(255,255,255,0.07);}
+      .mob-nav .btn-header{text-align:center;margin-top:8px;display:block;width:100%;}
+      .hero{padding:100px 20px 60px;}
+      .hero-stats{flex-direction:column;width:100%;max-width:340px;}
+      .stat{border-right:none;border-bottom:1px solid var(--border);}
+      .stat:last-child{border-bottom:none;}
+      .cards-grid{grid-template-columns:1fr 1fr;gap:12px;}
+      .why-grid{grid-template-columns:1fr;gap:40px;}
+      .cta-card{padding:28px;}
+      .steps-grid{grid-template-columns:1fr 1fr;}
+      footer{flex-direction:column;align-items:center;text-align:center;}
+      .footer-links{justify-content:center;flex-wrap:wrap;}
+      .section-wrap{padding:70px 20px;}
+      .services-header{flex-direction:column;gap:20px;}
+    }
+    @media(max-width:600px){
+      .hero-actions{flex-direction:column;align-items:stretch;width:100%;max-width:320px;}
+      .btn-primary,.btn-ghost{text-align:center;justify-content:center;width:100%;}
+      .cards-grid{grid-template-columns:1fr;}
+      .steps-grid{grid-template-columns:1fr;}
+    }
+    @media(prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important;}.marquee-track{animation:none;}}
+  </style>
 </head>
 <body>
+<div class="ambient"></div>
 
-<div id="loadingGlobal"><div class="loader-ring"></div></div>
-<div id="toast"></div>
+<header>
+  <div class="logo">ViVa <em>Soluções</em><span class="logo-dot"></span></div>
+  <nav>
+    <div class="nav-links" style="display:flex;align-items:center;gap:4px;">
+      <a href="#solucoes">Soluções</a>
+      <a href="#processo">Como funciona</a>
+      <a href="#contato">Contato</a>
+    </div>
+    <a onclick="openSalesModal()" class="btn-header" style="margin-left:16px;cursor:pointer;">Agendar Demo</a>
+    <button class="mob-menu-btn" onclick="toggleMobNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+  </nav>
+  <div class="mob-nav" id="mob-nav">
+    <a href="#solucoes" onclick="closeMobNav()">Soluções</a>
+    <a href="#processo" onclick="closeMobNav()">Como funciona</a>
+    <a href="#contato" onclick="closeMobNav()">Contato</a>
+    <a onclick="closeMobNav();openSalesModal();" class="btn-header">Agendar Demo</a>
+  </div>
+</header>
 
-<div id="modalAuditoria">
-    <div class="auditoria-box">
-        <div class="ficha-header">
-            <h2 class="text-gold" style="font-size:1.1rem;letter-spacing:1px;text-transform:uppercase;">Log de Auditoria — Master</h2>
-            <button class="btn btn-outline" onclick="fecharAuditoria()">Fechar</button>
+<section class="hero">
+  <div class="hero-eyebrow"><span></span>Inteligência Corporativa Aplicada</div>
+  <h1>Automação que transforma<br>dados em <span class="grad">vantagem real</span></h1>
+  <p class="hero-sub">Uma suíte completa de sistemas corporativos construída sobre o Google Workspace — sem licenças complexas, sem contratos obscuros. Inteligência operacional disponível para qualquer empresa.</p>
+  <div class="hero-actions">
+    <a onclick="openSalesModal()" class="btn-primary">Ver os 8 Módulos</a>
+    <a href="https://wa.me/5541999942148" target="_blank" class="btn-ghost">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#25d366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Falar no WhatsApp
+    </a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-val"><em>8</em></div><div class="stat-lbl">Módulos Ativos</div></div>
+    <div class="stat"><div class="stat-val"><em>5</em> meses</div><div class="stat-lbl">Em desenvolvimento</div></div>
+    <div class="stat"><div class="stat-val"><em>0</em></div><div class="stat-lbl">Licenças externas</div></div>
+    <div class="stat"><div class="stat-val"><em>100%</em></div><div class="stat-lbl">Validado em operação</div></div>
+  </div>
+</section>
+
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span>Google Workspace</span><span>Automação de Processos</span><span>Gestão de Frotas</span><span>Inteligência de Dados</span><span>Controle de Estoque</span><span>OCR Inteligente</span><span>Validação de Planilhas</span><span>Dashboard em Tempo Real</span>
+    <span>Google Workspace</span><span>Automação de Processos</span><span>Gestão de Frotas</span><span>Inteligência de Dados</span><span>Controle de Estoque</span><span>OCR Inteligente</span><span>Validação de Planilhas</span><span>Dashboard em Tempo Real</span>
+  </div>
+</div>
+
+<section id="solucoes" class="services-section">
+  <div class="section-wrap">
+    <div class="services-header">
+      <div>
+        <p class="section-eyebrow">Portfólio</p>
+        <h2 class="section-title">8 sistemas.<br>Uma operação unificada.</h2>
+      </div>
+      <p class="section-sub">Cada módulo foi construído para resolver um problema operacional real, validado em ambiente corporativo antes de chegar até você.</p>
+    </div>
+    <div class="cards-grid">
+      <div class="card"><div class="card-icon-wrap">🚨</div><h3>Gestão de Multas</h3><p>Ranking de ofensores, controle de passivo financeiro e monitoramento de risco de CNH por condutor.</p><span class="card-tag">Frota</span></div>
+      <div class="card"><div class="card-icon-wrap">🌱</div><h3>Ranking de Emissões</h3><p>Módulo ESG para cálculo de pegada de carbono e produção logística sustentável em tempo real.</p><span class="card-tag">ESG</span></div>
+      <div class="card"><div class="card-icon-wrap">🚚</div><h3>Gestão de Cargas</h3><p>Visibilidade total da fila de carregamento, agendamentos e controle de status operacional.</p><span class="card-tag">Operações</span></div>
+      <div class="card"><div class="card-icon-wrap">⚠️</div><h3>Sistema de Ocorrências</h3><p>Registro de desvios, avarias e tratativas imediatas com histórico seguro de auditoria.</p><span class="card-tag">Segurança</span></div>
+      <div class="card"><div class="card-icon-wrap">📅</div><h3>Controle de Escalas</h3><p>Alocação inteligente de motoristas e frota, evitando conflitos de turnos e horas extras.</p><span class="card-tag">RH</span></div>
+      <div class="card"><div class="card-icon-wrap">📊</div><h3>Validador de Planilhas</h3><p>Motor analítico de auditoria para cruzamento de bases complexas e detecção de erros.</p><span class="card-tag">Dados</span></div>
+      <div class="card"><div class="card-icon-wrap">📸</div><h3>Leitor OCR Inteligente</h3><p>Extração automática de dados textuais a partir de fotos de NFe e documentos em PDF.</p><span class="card-tag">Automação</span></div>
+      <div class="card"><div class="card-icon-wrap">📦</div><h3>Controle de Estoque</h3><p>Gestão de inventário, níveis críticos de insumos e acompanhamento de entradas e saídas.</p><span class="card-tag">Estoque</span></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="section-wrap">
+    <div class="why-grid">
+      <div>
+        <p class="section-eyebrow">Diferenciais</p>
+        <h2 class="section-title">Tecnologia corporativa sem o preço corporativo.</h2>
+        <div class="why-list">
+          <div class="why-item"><div class="why-num">01</div><div class="why-text"><h4>Validado em operação real</h4><p>5 meses de desenvolvimento e testes em ambiente corporativo real antes de qualquer venda.</p></div></div>
+          <div class="why-item"><div class="why-num">02</div><div class="why-text"><h4>Sem licenças de terceiros</h4><p>Construído sobre Google Workspace — infraestrutura que você provavelmente já paga.</p></div></div>
+          <div class="why-item"><div class="why-num">03</div><div class="why-text"><h4>Acesso imediato via link</h4><p>Sem instalação, sem configuração de servidor. Funciona no celular, computador e TV.</p></div></div>
+          <div class="why-item"><div class="why-num">04</div><div class="why-text"><h4>Suporte incluso na mensalidade</h4><p>Adaptações, atualizações e suporte técnico fazem parte do contrato — sem cobranças surpresa.</p></div></div>
         </div>
-        <div class="auditoria-filters">
-            <div><label>Data Início</label><input type="date" id="audit-inicio"></div>
-            <div><label>Data Fim</label><input type="date" id="audit-fim"></div>
-            <button class="btn btn-gold" style="height:38px;padding:0 18px;font-size:0.8rem;" onclick="filtrarLogs()">Filtrar</button>
-            <button class="btn btn-outline" style="height:38px;padding:0 18px;font-size:0.8rem;" onclick="exportarLogs()">Exportar CSV</button>
-        </div>
-        <div class="table-responsive">
-            <table>
-                <thead><tr><th>Data / Hora</th><th>Usuário</th><th>Ação</th><th>LH Trip</th><th>Resultado</th></tr></thead>
-                <tbody id="tabela-logs"></tbody>
-            </table>
-        </div>
+      </div>
+      <div class="cta-card">
+        <span class="cta-card-label">Demonstração privada</span>
+        <h3>Veja cada sistema rodando na prática</h3>
+        <p>Nossos sistemas contêm arquitetura de dados protegida. Agende uma apresentação guiada e veja o potencial completo de cada módulo aplicado à sua operação.</p>
+        <a onclick="openSalesModal()" class="btn-primary" style="cursor:pointer;text-align:center;">Agendar apresentação</a>
+        <a href="https://wa.me/5541999942148" target="_blank" class="btn-ghost" style="text-align:center;justify-content:center;">Falar com especialista</a>
+      </div>
     </div>
-</div>
+  </div>
+</section>
 
-<div id="loginOverlay">
-    <div class="login-box">
-        <div class="login-logo">TORRE <span class="text-accent">APK</span></div>
-        <div class="login-sub">Sistema de Carregamentos</div>
-        <input type="text" id="nomeUsuario" placeholder="Seu nome de usuário" onkeydown="if(event.key==='Enter') fazerLogin()">
-        <button class="btn" id="btn-login" style="width:100%;height:48px;" onclick="fazerLogin()">Acessar Sistema</button>
-        <div id="login-erro"></div>
+<section id="processo" class="process-section">
+  <div class="section-wrap">
+    <p class="section-eyebrow">Como funciona</p>
+    <h2 class="section-title">Da proposta à operação<br>em menos de uma semana.</h2>
+    <div class="steps-grid">
+      <div class="step"><div class="step-num">01</div><h4>Apresentação</h4><p>Demo guiada dos módulos relevantes para a sua operação, sem compromisso.</p></div>
+      <div class="step"><div class="step-num">02</div><h4>Proposta</h4><p>Proposta personalizada com plano com ou sem fidelidade, com valores claros.</p></div>
+      <div class="step"><div class="step-num">03</div><h4>Configuração</h4><p>Sistema configurado com os dados da sua empresa em até 7 dias úteis.</p></div>
+      <div class="step"><div class="step-num">04</div><h4>Treinamento</h4><p>Sua equipe treinada e operando com independência desde o primeiro dia.</p></div>
+      <div class="step"><div class="step-num">05</div><h4>Suporte ativo</h4><p>Acompanhamento contínuo, adaptações e atualizações durante toda a vigência.</p></div>
     </div>
-</div>
+  </div>
+</section>
 
-<div class="header">
-    <div class="header-brand">TORRE <span class="text-accent">APK</span></div>
-    <div class="controls">
-        <button class="btn" style="background:transparent;border:1px solid var(--blue);color:var(--blue);padding:0 14px;height:38px;font-size:0.8rem;" onclick="abrirTV()">📺 TV</button>
-        <button id="btn-relatorio" class="btn" style="display:none;" onclick="gerarRelatorioTurno()">Fechamento</button>
-        <button id="btn-auditoria" class="btn btn-gold" style="display:none;" onclick="abrirAuditoria()">Auditoria</button>
-        <span id="user-display" class="text-muted mono" style="font-size:0.8rem;"></span>
-        <input type="date" id="dataInput" onchange="alterarData()">
-    </div>
-</div>
+<section id="contato" class="cta-final">
+  <div class="cta-final-inner">
+    <h2>Pronto para modernizar sua gestão?</h2>
+    <p>Fale com um especialista e descubra qual módulo resolve o maior gargalo da sua operação hoje.</p>
+    <a href="https://wa.me/5541999942148?text=Olá!%20Vi%20o%20portfólio%20da%20ViVa%20Soluções%20Digital%20e%20quero%20conhecer%20os%20sistemas." target="_blank" class="btn-wa">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Falar com um Especialista
+    </a>
+  </div>
+</section>
 
-<div id="alertaPendencias"></div>
+<footer>
+  <div class="footer-logo">ViVa <em>Soluções</em></div>
+  <div class="footer-links">
+    <a href="#solucoes">Soluções</a>
+    <a href="#processo">Como funciona</a>
+    <a href="https://wa.me/5541999942148" target="_blank">Contato</a>
+  </div>
+  <small>© 2026 ViVa Soluções Digital</small>
+</footer>
 
-<div class="kpi-row">
-    <div class="kpi kpi-clicavel" style="border-bottom:3px solid var(--blue);" onclick="toggleArea('listaVolumeDiaArea')"><small>Volume do Dia</small><h2 id="k-total" style="color:var(--blue)">0</h2></div>
-    <div class="kpi"><small>Performance</small><h2 id="k-prod">0%</h2></div>
-    <div class="kpi kpi-clicavel kpi-emitidas"   onclick="toggleArea('listaEmitidasArea')"><small>Emitidas</small><h2 id="k-emitidas" class="text-green">0</h2></div>
-    <div class="kpi kpi-clicavel kpi-canceladas" onclick="toggleArea('listaNoShowArea')"><small>Canceladas</small><h2 id="k-cancel" class="text-red">0</h2></div>
-    <div class="kpi kpi-clicavel kpi-pendentes"  onclick="toggleArea('listaPendentesEmailArea')"><small>Inbox <span id="email-timer"></span></small><h2 id="k-email" class="text-gold">0</h2></div>
-</div>
-
-<div id="listaVolumeDiaArea" class="lista-suspensa">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px;">
-        <h3 style="color:var(--blue);margin:0;border:none;padding:0;">Todas as Cargas do Dia</h3>
-        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-            <input type="text" id="filtro-volume" placeholder="Filtrar por LH, rota, motorista..." oninput="filtrarVolumeDia()"
-                   style="background:var(--bg-body);border:1px solid var(--border-hover);color:var(--text-main);padding:7px 12px;border-radius:var(--radius);font-family:'Syne',sans-serif;font-size:0.8rem;outline:none;width:240px;">
-            <select id="filtro-status-volume" onchange="filtrarVolumeDia()"
-                    style="background:var(--bg-body);border:1px solid var(--border-hover);color:var(--text-main);padding:7px 12px;border-radius:var(--radius);font-family:'Syne',sans-serif;font-size:0.8rem;outline:none;">
-                <option value="todos">Todos os status</option>
-                <option value="concluida">✅ Concluída</option>
-                <option value="pendente">⏳ Pendente</option>
-                <option value="cancelada">❌ Cancelada</option>
-            </select>
-        </div>
-    </div>
-    <div id="volume-summary" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;"></div>
-    <div class="table-responsive">
-        <table>
-            <thead><tr><th>LH Trip</th><th>Rota</th><th>Motorista</th><th>Cavalo</th><th>Data Coleta</th><th>CTE</th><th>Manifesto</th><th>Pedágio</th><th>CIOT</th><th>Status</th><th></th></tr></thead>
-            <tbody id="volume-table-body"></tbody>
-        </table>
-    </div>
-</div>
-
-<div id="listaEmitidasArea" class="lista-suspensa">
-    <h3 class="text-green">LHs Emitidas — Concluídas</h3>
-    <div class="table-responsive">
-        <table>
-            <thead><tr><th>LH Trip</th><th>Rota</th><th>Cavalo</th><th>Motorista</th><th>Emissor</th></tr></thead>
-            <tbody id="emitidas-table-body"></tbody>
-        </table>
-    </div>
-    <div class="ranking-grid">
-        <div id="ranking-emitidas-area"></div>
-        <div id="ranking-emissores-area"></div>
-    </div>
-</div>
-
-<div id="listaNoShowArea" class="lista-suspensa">
-    <h3 class="text-red">Cancelamentos Registrados</h3>
-    <div class="table-responsive">
-        <table>
-            <thead><tr><th>LH Trip</th><th>Rota</th><th>Motorista</th></tr></thead>
-            <tbody id="noshow-table-body"></tbody>
-        </table>
-    </div>
-    <div id="ranking-rotas-area" style="margin-top:16px;"></div>
-</div>
-
-<div id="listaPendentesEmailArea" class="lista-suspensa">
-    <h3 class="text-gold">LHs Aguardando Emissão</h3>
-    <div class="table-responsive">
-        <table>
-            <thead><tr><th>Hora</th><th>LH Trip</th><th>Ação</th></tr></thead>
-            <tbody id="email-table-body"></tbody>
-        </table>
-    </div>
-</div>
-
-<div class="search-area">
-    <input type="text" id="campoBusca" placeholder="Cole ou digite o código da LH Trip..." onkeydown="if(event.key==='Enter') pesquisar()">
-    <button class="btn" onclick="pesquisar()">Buscar Carga</button>
-</div>
-
-<div id="fichaResultado" class="ficha">
-    <div class="ficha-header">
-        <div class="ficha-lh" id="res-lh">---</div>
-        <div style="text-align:right;">
-            <span class="ficha-data-label">Data de Coleta</span>
-            <span class="ficha-data-val" id="res-data">---</span>
-        </div>
-    </div>
-    <div class="grid">
-        <div class="info-box"><label>Tipo Veículo</label><div id="res-tipo">---</div></div>
-        <div class="info-box"><label>Motorista</label><div id="res-mot">---</div></div>
-        <div class="info-box">
-            <label>Telefone</label>
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-                <div id="res-tel" class="mono">---</div>
-                <button id="btn-wpp" style="background:var(--wpp);border:none;border-radius:4px;padding:4px 10px;cursor:pointer;font-weight:700;color:#fff;font-size:0.72rem;display:none;white-space:nowrap;" onclick="enviarWpp()">WPP</button>
-            </div>
-        </div>
-        <div class="info-box"><label>Perfil</label><div id="res-perfil">---</div></div>
-        <div class="info-box"><label>Placa Cavalo</label><div id="res-cav" class="mono">---</div></div>
-        <div class="info-box"><label>Placa Carreta</label><div id="res-car" class="mono">---</div></div>
-        <div class="info-box" style="grid-column:span 2;"><label>Rota</label><div id="res-rota">---</div></div>
-    </div>
-    <div id="boxFinanceiro" class="financeiro-box">
-        <div><label>Frete Total</label><div class="financeiro-val text-gold" id="res-frete">---</div></div>
-        <div><label>Adiantamento</label><div class="financeiro-val" id="res-adiant">---</div></div>
-    </div>
-    <div id="loading-email" class="sync-box">⏳ Sincronizando anexo do Gmail...</div>
-    <div id="erro-email" class="error-box"></div>
-    <div id="area-download-shopee" class="download-area">
-        <div class="file-info"><div>📁 Planilha Localizada</div><div id="nome-arq"></div></div>
-        <button class="btn btn-outline" id="btn-baixar">Download</button>
-    </div>
-    <div id="obsBox" class="obs-box">
-        <div class="obs-header">
-            <span class="obs-title">📝 Observações</span>
-            <label class="parada-toggle" title="Marcar emissão como parada">
-                <input type="checkbox" id="chk-parada" onchange="toggleParada()">
-                <div class="parada-switch"></div>
-                <span class="parada-label">⛔ EMISSÃO PARADA</span>
-            </label>
-        </div>
-        <textarea id="obs-textarea" class="obs-textarea" placeholder="Digite uma observação sobre esta LH..." oninput="obsChanged()"></textarea>
-        <div class="obs-footer">
-            <span class="obs-meta" id="obs-meta"></span>
-            <button class="btn" id="btn-salvar-obs" style="height:34px;padding:0 16px;font-size:0.78rem;opacity:0.4;cursor:not-allowed;" onclick="salvarObservacao()" disabled>Salvar</button>
-        </div>
-    </div>
-    <div class="workflow-secao">
-        <button id="btn-cte"       class="btn-emissao" onclick="mudarStatusEmissao('cte')">CTE Pendente</button>
-        <button id="btn-manifesto" class="btn-emissao" onclick="mudarStatusEmissao('manifesto')">Manifesto Pendente</button>
-        <button id="btn-pedagio"   class="btn-emissao" onclick="mudarStatusEmissao('pedagio')">Pedágio Pendente</button>
-        <button id="btn-ciot"      class="btn-emissao" onclick="mudarStatusEmissao('ciot')">CIOT Pendente</button>
-    </div>
+<div id="sales-modal">
+  <div class="modal-box">
+    <span class="modal-badge">🔒 Acesso Privado</span>
+    <h3>Demonstração guiada</h3>
+    <p>Nossos sistemas contêm arquitetura de dados protegida. Para ver cada módulo rodando na prática, agende uma apresentação com nossos especialistas — sem compromisso.</p>
+    <a href="https://wa.me/5541999942148?text=Olá!%20Gostaria%20de%20agendar%20uma%20demonstração%20guiada%20dos%20sistemas%20da%20ViVa%20Soluções%20Digital." target="_blank" class="btn-demo">Agendar pelo WhatsApp</a>
+    <button class="btn-close" onclick="closeSalesModal()">Voltar ao site</button>
+  </div>
 </div>
 
 <script>
-// ============================================================
-// MAPEAMENTO DE COLUNAS — ABA CARGAS
-// [0]=PERFIL  [1]=ROTA  [2]=LH TRIP  [3]=DATA COLETA
-// [4]=CPT META  [5]=ETA DESTINO  [6]=PERFIL(FROTA/TERC)
-// [7]=LIBERAÇÕES  [8]=ESPELHAMENTO  [9]=CONTATO
-// [10]=NOME  [11]=CAVALO  [12]=CARRETA
-// [13]=ETA ORIGEM  [14]=STATUS LH
-// ============================================================
-
-var dadosPlanilha    = [];
-var statusEmissoes   = {};
-var dadosFinanceiros = {};
-var observacoes      = {};
-var lhAberta         = '';
-var usuarioAtual     = '';
-var perfilUsuario    = 'OPERADOR';
-var listaLHsEmail    = [];
-var logsCache        = [];
-var _obsModificado   = false;
-var estadosRanking   = { 'ranking-emitidas-area': false, 'ranking-rotas-area': false, 'ranking-emissores-area': false };
-var emailProximaAtualizacao = 0;
-var emailTimerInterval      = null;
-var qtdPendenciasAnterior   = -1;
-var piscaAbaInterval        = null;
-var tituloOriginal          = 'TORRE APK | Dashboard';
-
-function showLoading() { document.getElementById('loadingGlobal').style.display = 'flex'; }
-function hideLoading() { document.getElementById('loadingGlobal').style.display = 'none'; }
-
-function toast(msg, tipo) {
-    var t = document.getElementById('toast');
-    t.innerText = msg;
-    t.style.borderLeftColor = (tipo === 'erro') ? 'var(--red)' : 'var(--green)';
-    t.style.display = 'block';
-    setTimeout(function() { t.style.display = 'none'; }, 3500);
-}
-
-function tocarBip() {
-    try {
-        var ctx = new (window.AudioContext || window.webkitAudioContext)();
-        var osc = ctx.createOscillator(); var gain = ctx.createGain();
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime);
-        gain.gain.setValueAtTime(0.1, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.3);
-        osc.start(); osc.stop(ctx.currentTime + 0.3);
-    } catch(e) {}
-}
-
-function piscarAba() {
-    if (piscaAbaInterval) return;
-    var pisca = false;
-    piscaAbaInterval = setInterval(function() {
-        document.title = pisca ? '⚠️ NOVA CARGA!' : tituloOriginal; pisca = !pisca;
-    }, 1000);
-}
-
-window.onfocus = function() {
-    if (piscaAbaInterval) { clearInterval(piscaAbaInterval); piscaAbaInterval = null; document.title = tituloOriginal; }
-};
-
-// ── DATA HELPERS ──
-function rowDateToISO(ds) {
-    if (!ds) return '';
-    var s = String(ds).trim();
-    if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
-    var m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})/);
-    if (m) return m[3] + '-' + m[2] + '-' + m[1];
-    var d = new Date(s);
-    if (!isNaN(d.getTime())) return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
-    return '';
-}
-
-function filtrarPorData(arr, dt) {
-    return arr.filter(function(r) { return r[3] && rowDateToISO(r[3]) === dt; });
-}
-
-// ── HELPER: verifica se linha é cancelada (coluna [14] = STATUS LH) ──
-function isCancelada(r) {
-    return r[14] && String(r[14]).toUpperCase().includes('CANCELADA');
-}
-
-// ── LOGIN ──
-function fazerLogin() {
-    var inputEl = document.getElementById('nomeUsuario');
-    var btnEl   = document.getElementById('btn-login');
-    var erroEl  = document.getElementById('login-erro');
-    var n       = inputEl ? inputEl.value : '';
-    erroEl.style.display = 'none';
-    if (!n || String(n).trim().length < 2) { erroEl.innerText = '⚠️ Digite um nome válido (mínimo 2 caracteres).'; erroEl.style.display = 'block'; return; }
-    if (typeof google === 'undefined' || !google.script || !google.script.run) { erroEl.innerText = '⚠️ Abra o sistema pela URL do Apps Script.'; erroEl.style.display = 'block'; return; }
-    var nomeFormatado = String(n).trim().toUpperCase();
-    btnEl.innerText = 'Verificando...'; btnEl.disabled = true;
-    google.script.run
-        .withSuccessHandler(function(autorizado) {
-            if (autorizado === true) {
-                usuarioAtual = nomeFormatado;
-                document.getElementById('loginOverlay').style.display = 'none';
-                try { new (window.AudioContext || window.webkitAudioContext)().resume(); } catch(e) {}
-                google.script.run
-                    .withSuccessHandler(function(perfil) {
-                        perfilUsuario = perfil || 'OPERADOR';
-                        if (perfilUsuario === 'MASTER') {
-                            document.getElementById('btn-auditoria').style.display = 'inline-flex';
-                            document.getElementById('btn-relatorio').style.display = 'inline-flex';
-                        }
-                        iniciarSistema();
-                    })
-                    .withFailureHandler(function() { iniciarSistema(); })
-                    .obterPerfilUsuario(nomeFormatado);
-            } else {
-                erroEl.innerText = '⛔ Acesso negado. Verifique se seu nome está cadastrado na aba "Usuarios".';
-                erroEl.style.display = 'block';
-                btnEl.innerText = 'Acessar Sistema'; btnEl.disabled = false;
-            }
-        })
-        .withFailureHandler(function(err) {
-            erroEl.innerText = '⚠️ Erro de conexão: ' + ((err && err.message) ? err.message : String(err));
-            erroEl.style.display = 'block';
-            btnEl.innerText = 'Acessar Sistema'; btnEl.disabled = false;
-        })
-        .validarUsuario(nomeFormatado);
-}
-
-// ── INICIALIZAÇÃO ──
-function iniciarSistema() {
-    document.getElementById('user-display').innerText = usuarioAtual;
-    document.getElementById('dataInput').value = new Date().toISOString().split('T')[0];
-    carregarDados();
-    verificarPendenciasEmail();
-    carregarObservacoes();
-    setInterval(carregarDados, 60000);
-    setInterval(verificarPendenciasEmail, 120000);
-    setInterval(carregarObservacoes, 30000);
-    if (perfilUsuario === 'MASTER') setInterval(verificarAtrasadas, 300000);
-    iniciarTimerEmail();
-}
-
-// ── CARREGAMENTO ──
-function carregarDados() {
-    google.script.run
-        .withSuccessHandler(function(res) {
-            var r;
-            try { r = (typeof res === 'string') ? JSON.parse(res) : res; } catch(e) { toast('Erro ao processar dados.', 'erro'); return; }
-            if (!r || r.sucesso === false) { toast('Erro: ' + (r ? r.erro : 'desconhecido'), 'erro'); return; }
-            dadosPlanilha    = r.dados      || [];
-            statusEmissoes   = r.status     || {};
-            dadosFinanceiros = r.financeiro || {};
-            atualizarDashboard();
-            renderizarPendencias();
-            if (lhAberta) atualizarBotoesWorkflow(lhAberta);
-        })
-        .withFailureHandler(function(err) { toast('Falha na conexão: ' + (err && err.message ? err.message : 'erro'), 'erro'); })
-        .buscarDadosReais();
-}
-
-function verificarPendenciasEmail() {
-    google.script.run
-        .withSuccessHandler(function(res) {
-            var r; try { r = (typeof res === 'string') ? JSON.parse(res) : res; } catch(e) { r = { dados: [] }; }
-            listaLHsEmail = r.dados || [];
-            renderizarPendencias();
-            emailProximaAtualizacao = Date.now() + 120000;
-        })
-        .withFailureHandler(function() { toast('Falha ao consultar Gmail.', 'erro'); })
-        .listarLHsPendentesNoEmail();
-}
-
-function verificarAtrasadas() {
-    google.script.run
-        .withSuccessHandler(function(res) {
-            var r; try { r = JSON.parse(res); } catch(e) { return; }
-            if (!r.sucesso || !r.dados || r.dados.length === 0) { document.getElementById('alertaPendencias').style.display = 'none'; return; }
-            var el = document.getElementById('alertaPendencias');
-            el.innerText = '⚠️ ' + r.dados.length + ' LH(s) sem emissão há mais de 24h: ' + r.dados.map(function(x) { return x.lh + ' (' + x.horas + 'h)'; }).join(' · ');
-            el.style.display = 'block';
-        })
-        .buscarLHsComPendenciaAtrasada();
-}
-
-function iniciarTimerEmail() {
-    emailProximaAtualizacao = Date.now() + 120000;
-    if (emailTimerInterval) clearInterval(emailTimerInterval);
-    emailTimerInterval = setInterval(function() {
-        var restante = Math.max(0, Math.round((emailProximaAtualizacao - Date.now()) / 1000));
-        var el = document.getElementById('email-timer');
-        if (el) el.innerText = restante > 0 ? '(' + restante + 's)' : '';
-        if (restante === 0) emailProximaAtualizacao = Date.now() + 120000;
-    }, 1000);
-}
-
-// ── PENDÊNCIAS EMAIL ──
-function renderizarPendencias() {
-    var dt   = document.getElementById('dataInput').value;
-    var filt = listaLHsEmail.filter(function(p) {
-        if (p.data_iso !== dt) return false;
-        var lh = String(p.lh).trim();
-        var s  = statusEmissoes[lh] || {};
-        var r  = dadosPlanilha.find(function(x) { return x[2] && String(x[2]).trim() === lh; });
-        if (r && isCancelada(r)) return false;  // usa [14]
-        if (s && s.cte && s.manifesto && s.pedagio && s.ciot) return false;
-        return true;
-    });
-    var total = filt.length;
-    document.getElementById('k-email').innerText = total;
-    if (qtdPendenciasAnterior !== -1 && total > qtdPendenciasAnterior) { tocarBip(); piscarAba(); }
-    qtdPendenciasAnterior = total;
-    var tb = document.getElementById('email-table-body');
-    if (total === 0) { tb.innerHTML = "<tr><td colspan='3' style='text-align:center;padding:20px;color:var(--text-muted);'>Caixa de entrada limpa ✓</td></tr>"; return; }
-    tb.innerHTML = filt.map(function(p) {
-        var obsInfo = observacoes[p.lh] || {};
-        var badgeHtml = obsInfo.parada ? '<span class="badge-parada">⛔ PARADA</span>' : (obsInfo.obs && obsInfo.obs.trim() ? '<span class="badge-obs">📝 OBS</span>' : '');
-        return '<tr style="' + (obsInfo.parada ? 'background:rgba(239,68,68,0.04);' : '') + '">' +
-            '<td class="mono" style="color:var(--text-muted)">' + p.data + '</td>' +
-            '<td><strong class="text-gold mono">' + p.lh + '</strong>' + (badgeHtml ? ' ' + badgeHtml : '') +
-            (obsInfo.obs && obsInfo.obs.trim() && !obsInfo.parada ? '<div style="font-size:0.7rem;color:var(--text-muted);margin-top:3px;">' + obsInfo.obs + '</div>' : '') +
-            (obsInfo.parada ? '<div style="font-size:0.7rem;color:var(--red);margin-top:3px;">' + (obsInfo.obs || 'Emissão bloqueada') + '</div>' : '') + '</td>' +
-            '<td><button class="btn" style="padding:0 14px;height:32px;font-size:0.75rem;" onclick="irParaLH(\'' + p.lh + '\')">Processar</button></td>' +
-        '</tr>';
-    }).join('');
-}
-
-function irParaLH(lh) {
-    document.getElementById('campoBusca').value = lh;
-    pesquisar();
-    document.getElementById('listaPendentesEmailArea').style.display = 'none';
-    window.scrollTo({ top: document.querySelector('.search-area').offsetTop - 20, behavior: 'smooth' });
-}
-
-// ── DASHBOARD ──
-function alterarData() { atualizarDashboard(); renderizarPendencias(); }
-
-function atualizarDashboard() {
-    var dt     = document.getElementById('dataInput').value;
-    var regDia = filtrarPorData(dadosPlanilha, dt);
-
-    // STATUS LH está na coluna [14]
-    var canc = regDia.filter(function(r) { return isCancelada(r); });
-
-    var emit = regDia.filter(function(r) {
-        var lhV = r[2] ? String(r[2]).trim() : '';
-        var s   = statusEmissoes[lhV] || {};
-        if (isCancelada(r)) return false;
-        return s.cte && s.manifesto && s.pedagio && s.ciot;
-    });
-
-    var listaEmissores = emit.map(function(r) {
-        var lhV     = r[2] ? String(r[2]).trim() : '';
-        var s       = statusEmissoes[lhV] || {};
-        var emissor = s.auditoria ? String(s.auditoria).split('|')[0].trim() : 'DESCONHECIDO';
-        return [null, emissor];
-    });
-
-    document.getElementById('k-total').innerText    = regDia.length;
-    document.getElementById('k-cancel').innerText   = canc.length;
-    document.getElementById('k-emitidas').innerText = emit.length;
-    document.getElementById('k-prod').innerText     = regDia.length > 0
-        ? Math.round(((regDia.length - canc.length) / regDia.length) * 100) + '%' : '0%';
-
-    // Canceladas: motorista = [10], rota = [1]
-    document.getElementById('noshow-table-body').innerHTML = canc.length === 0
-        ? "<tr><td colspan='3' style='text-align:center;padding:20px;color:var(--text-muted);'>Nenhum cancelamento no período.</td></tr>"
-        : canc.map(function(c) {
-            return '<tr><td><strong class="mono">' + (c[2]||'---') + '</strong></td>' +
-                '<td class="text-muted">' + (c[1]||'---') + '</td>' +
-                '<td>' + (c[10]||'---') + '</td></tr>';  // motorista = [10]
-        }).join('');
-
-    // Emitidas: cavalo = [11], motorista = [10]
-    document.getElementById('emitidas-table-body').innerHTML = emit.length === 0
-        ? "<tr><td colspan='5' style='text-align:center;padding:20px;color:var(--text-muted);'>Nenhuma emissão no período.</td></tr>"
-        : emit.map(function(e) {
-            var lhV     = String(e[2]).trim();
-            var emissor = (statusEmissoes[lhV] && statusEmissoes[lhV].auditoria)
-                ? String(statusEmissoes[lhV].auditoria).split('|')[0].trim() : '---';
-            return '<tr>' +
-                '<td><strong class="mono">' + (e[2]||'---')  + '</strong></td>' +
-                '<td class="text-muted">'   + (e[1]||'---')  + '</td>' +
-                '<td class="mono">'         + (e[11]||'---') + '</td>' +  // CAVALO = [11]
-                '<td>'                      + (e[10]||'---') + '</td>' +  // NOME   = [10]
-                '<td><span class="badge badge-muted">' + emissor + '</span></td>' +
-            '</tr>';
-        }).join('');
-
-    renderizarRanking(canc,           'ranking-rotas-area',     'Top Rotas Canceladas', 'var(--red)');
-    renderizarRanking(emit,           'ranking-emitidas-area',  'Top Rotas Emitidas',   'var(--green)');
-    renderizarRanking(listaEmissores, 'ranking-emissores-area', '🏆 Top Operadores',     'var(--gold)');
-
-    if (document.getElementById('listaVolumeDiaArea').style.display === 'block') renderizarVolumeDia();
-}
-
-// ── RANKING ──
-function renderizarRanking(lista, containerId, titulo, cor) {
-    var container = document.getElementById(containerId);
-    if (!lista || lista.length === 0) { container.innerHTML = ''; return; }
-    var c = {};
-    lista.forEach(function(x) { var k = x[1]||'N/A'; c[k] = (c[k]||0)+1; });
-    var ord      = Object.keys(c).map(function(k) { return { r:k, q:c[k] }; }).sort(function(a,b) { return b.q-a.q; });
-    var max      = ord[0].q;
-    var expandido = estadosRanking[containerId];
-    var exibidos  = expandido ? ord : ord.slice(0, 5);
-    var html = '<h4 style="color:' + cor + ';margin:0 0 12px;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;">' + titulo + '</h4>';
-    html += exibidos.map(function(item, i) {
-        return '<div class="ranking-item">' +
-            '<div class="rank-pos">#' + (i+1) + '</div>' +
-            '<div class="rank-info"><div class="rank-title">' + item.r + '</div>' +
-            '<div class="rank-bar"><div class="rank-fill" style="width:' + ((item.q/max)*100) + '%;background:' + cor + '"></div></div></div>' +
-            '<div class="rank-value">' + item.q + '</div></div>';
-    }).join('');
-    if (ord.length > 5) {
-        html += '<button class="btn-ver-mais" onclick="toggleRanking(\'' + containerId + '\')">' + (expandido ? 'Ocultar' : 'Ver todos (' + ord.length + ')') + '</button>';
-    }
-    container.innerHTML = html;
-}
-
-function toggleRanking(id) { estadosRanking[id] = !estadosRanking[id]; atualizarDashboard(); }
-
-// ── VOLUME DO DIA ──
-var _volumeDiaCache = [];
-
-function renderizarVolumeDia() {
-    var dt = document.getElementById('dataInput').value;
-    _volumeDiaCache = filtrarPorData(dadosPlanilha, dt);
-    _renderizarTabelaVolume(_volumeDiaCache);
-}
-
-function filtrarVolumeDia() {
-    var texto  = String(document.getElementById('filtro-volume').value).trim().toUpperCase();
-    var status = document.getElementById('filtro-status-volume').value;
-    var filtrado = _volumeDiaCache.filter(function(r) {
-        if (texto) {
-            var lh  = String(r[2]||'').toUpperCase();
-            var rot = String(r[1]||'').toUpperCase();
-            var mot = String(r[10]||'').toUpperCase(); // NOME = [10]
-            if (!lh.includes(texto) && !rot.includes(texto) && !mot.includes(texto)) return false;
-        }
-        if (status !== 'todos') {
-            var cancelada = isCancelada(r); // [14]
-            var lhV       = String(r[2]||'').trim();
-            var s         = statusEmissoes[lhV] || {};
-            var concluida = s.cte && s.manifesto && s.pedagio && s.ciot;
-            if (status === 'cancelada' && !cancelada) return false;
-            if (status === 'concluida' && (!concluida || cancelada)) return false;
-            if (status === 'pendente'  && (concluida || cancelada))  return false;
-        }
-        return true;
-    });
-    _renderizarTabelaVolume(filtrado);
-}
-
-function _renderizarTabelaVolume(linhas) {
-    var total = _volumeDiaCache.length, concl = 0, pend = 0, canc = 0;
-    _volumeDiaCache.forEach(function(r) {
-        var cancelada = isCancelada(r);
-        var lhV = String(r[2]||'').trim();
-        var s   = statusEmissoes[lhV] || {};
-        if (cancelada) canc++;
-        else if (s.cte && s.manifesto && s.pedagio && s.ciot) concl++;
-        else pend++;
-    });
-    document.getElementById('volume-summary').innerHTML =
-        _chip(total, 'Total', 'var(--blue)') + _chip(concl, 'Concluídas', 'var(--green)') +
-        _chip(pend,  'Pendentes', 'var(--gold)') + _chip(canc, 'Canceladas', 'var(--red)');
-
-    var tb = document.getElementById('volume-table-body');
-    if (linhas.length === 0) { tb.innerHTML = "<tr><td colspan='11' style='text-align:center;padding:24px;color:var(--text-muted);'>Nenhuma carga encontrada.</td></tr>"; return; }
-
-    tb.innerHTML = linhas.map(function(r) {
-        var lhV      = String(r[2]||'').trim();
-        var s        = statusEmissoes[lhV] || {};
-        var cancelada = isCancelada(r);
-        var concluida = !cancelada && s.cte && s.manifesto && s.pedagio && s.ciot;
-        var badgeStatus = cancelada
-            ? '<span class="badge badge-red">Cancelada</span>'
-            : concluida
-                ? '<span class="badge" style="background:var(--green-muted);color:var(--green);border:1px solid rgba(16,185,129,0.3);">Concluída</span>'
-                : '<span class="badge" style="background:var(--gold-muted);color:var(--gold);border:1px solid rgba(245,158,11,0.3);">Pendente</span>';
-        function docIcon(ok) { return ok ? '<span style="color:var(--green);font-size:1rem;">✓</span>' : '<span style="color:var(--text-dim);font-size:0.9rem;">·</span>'; }
-
-        return '<tr>' +
-            '<td><strong class="mono" style="cursor:pointer;color:var(--blue);" onclick="irParaLH(\'' + lhV + '\')">' + (lhV||'---') + '</strong></td>' +
-            '<td style="color:var(--text-muted);font-size:0.82rem;">'  + (r[1]||'---')  + '</td>' +  // ROTA=[1]
-            '<td style="font-size:0.85rem;">'                          + (r[10]||'---') + '</td>' +  // NOME=[10]
-            '<td class="mono" style="font-size:0.82rem;">'             + (r[11]||'---') + '</td>' +  // CAVALO=[11]
-            '<td class="mono" style="font-size:0.8rem;color:var(--text-muted);">' + (r[3]||'---') + '</td>' + // DATA=[3]
-            '<td style="text-align:center;">' + docIcon(s.cte)       + '</td>' +
-            '<td style="text-align:center;">' + docIcon(s.manifesto)  + '</td>' +
-            '<td style="text-align:center;">' + docIcon(s.pedagio)    + '</td>' +
-            '<td style="text-align:center;">' + docIcon(s.ciot)       + '</td>' +
-            '<td>' + badgeStatus + '</td>' +
-            '<td><button class="btn" style="padding:0 10px;height:28px;font-size:0.72rem;background:transparent;border:1px solid var(--border-hover);color:var(--text-muted);" onclick="irParaLH(\'' + lhV + '\')">Abrir</button></td>' +
-        '</tr>';
-    }).join('');
-}
-
-function _chip(valor, label, cor) {
-    return '<div style="background:transparent;border:1px solid ' + cor + ';border-radius:6px;padding:5px 12px;display:flex;gap:6px;align-items:center;">' +
-        '<span style="font-weight:800;color:' + cor + ';font-family:\'JetBrains Mono\',monospace;">' + valor + '</span>' +
-        '<span style="font-size:0.72rem;color:var(--text-muted);font-weight:700;text-transform:uppercase;">' + label + '</span></div>';
-}
-
-// ── PESQUISA ──
-// MAPEAMENTO CORRETO:
-// [0]=PERFIL VEÍCULO  [1]=ROTA  [2]=LH TRIP  [3]=DATA COLETA
-// [6]=PERFIL(FROTA/TERC)  [9]=CONTATO  [10]=NOME  [11]=CAVALO  [12]=CARRETA  [14]=STATUS LH
-function pesquisar() {
-    var inputEl = document.getElementById('campoBusca');
-    if (!inputEl) return;
-    var t = String(inputEl.value).trim().toUpperCase();
-    if (!t) return toast('Digite o código da LH!', 'erro');
-    if (dadosPlanilha.length === 0) return toast('Base vazia — aguarde o carregamento.', 'erro');
-
-    var r = dadosPlanilha.find(function(x) {
-        return x[2] && String(x[2]).toUpperCase().includes(t);
-    });
-    if (!r) return toast('LH não encontrada! (' + dadosPlanilha.length + ' cargas carregadas)', 'erro');
-
-    lhAberta = String(r[2]).trim();
-    var ficha = document.getElementById('fichaResultado');
-    ficha.style.display = 'block';
-    ficha.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    var f           = dadosFinanceiros[lhAberta] || { frete: '---', adiant: '---' };
-    var cancelada   = isCancelada(r);                            // STATUS LH = [14]
-    var perfilCarga = r[6] ? String(r[6]).toUpperCase() : '---'; // PERFIL(FROTA/TERC) = [6]
-    var telBruto    = r[9] ? String(r[9]) : '---';               // CONTATO = [9]
-
-    document.getElementById('res-lh').innerHTML =
-        '<span class="mono">' + lhAberta + '</span>' +
-        (cancelada ? ' <span class="badge badge-red">Cancelada</span>' : '');
-
-    document.getElementById('res-tipo').innerText   = r[0]  || '---';  // PERFIL VEÍCULO = [0]
-    document.getElementById('res-mot').innerText    = r[10] || '---';  // NOME motorista = [10]
-    document.getElementById('res-tel').innerText    = telBruto;         // CONTATO = [9]
-    document.getElementById('res-cav').innerText    = r[11] || '---';  // CAVALO = [11]
-    document.getElementById('res-car').innerText    = r[12] || '---';  // CARRETA = [12]
-    document.getElementById('res-rota').innerText   = r[1]  || '---';  // ROTA = [1]
-    document.getElementById('res-data').innerText   = r[3]  || '---';  // DATA COLETA = [3]
-    document.getElementById('res-perfil').innerText = perfilCarga;      // PERFIL = [6]
-
-    var telLimpo = String(telBruto).replace(/\D/g, '');
-    document.getElementById('btn-wpp').style.display = (telBruto !== '---' && telLimpo.length >= 10) ? 'inline-block' : 'none';
-
-    var bF = document.getElementById('boxFinanceiro');
-    if (perfilCarga.includes('TERCEIRO')) {
-        bF.style.display = 'grid';
-        document.getElementById('res-frete').innerText  = f.frete  || '---';
-        document.getElementById('res-adiant').innerText = f.adiant || '---';
-    } else {
-        bF.style.display = 'none';
-    }
-
-    atualizarBotoesWorkflow(lhAberta);
-    preencherObsNaFicha(lhAberta);
-
-    document.getElementById('area-download-shopee').style.display = 'none';
-    document.getElementById('erro-email').style.display            = 'none';
-    document.getElementById('loading-email').style.display         = 'block';
-
-    showLoading();
-    google.script.run
-        .withSuccessHandler(function(res) {
-            hideLoading();
-            document.getElementById('loading-email').style.display = 'none';
-            var result; try { result = (typeof res === 'string') ? JSON.parse(res) : res; } catch(e) { result = res; }
-            if (result && result.sucesso) {
-                var area = document.getElementById('area-download-shopee');
-                area.style.display = 'flex';
-                document.getElementById('nome-arq').innerText = result.nome;
-                document.getElementById('btn-baixar').onclick = function() { window.open(result.url, '_blank'); };
-                toast('Planilha localizada!');
-            } else {
-                var erroEl = document.getElementById('erro-email');
-                erroEl.innerText = '⚠️ ' + (result ? result.erro : 'Erro desconhecido');
-                erroEl.style.display = 'block';
-            }
-        })
-        .withFailureHandler(function() { hideLoading(); document.getElementById('loading-email').style.display = 'none'; toast('Falha ao buscar no Gmail.', 'erro'); })
-        .buscarPlanilhaLHNoEmail(lhAberta);
-}
-
-// ── WORKFLOW EMISSÃO ──
-function atualizarBotoesWorkflow(lh) {
-    var s         = statusEmissoes[lh] || {};
-    var r         = dadosPlanilha.find(function(x) { return x[2] && String(x[2]).trim() === lh; });
-    var cancelada = r ? isCancelada(r) : false;
-    ['cte', 'manifesto', 'pedagio', 'ciot'].forEach(function(c) {
-        var b = document.getElementById('btn-' + c);
-        if (cancelada) { b.classList.remove('ok'); b.innerText = 'Bloqueado'; b.disabled = true; b.style.opacity = '0.3'; }
-        else if (s[c]) { b.classList.add('ok'); b.innerHTML = '✓ ' + c.toUpperCase(); b.disabled = true; b.style.opacity = '1'; }
-        else { b.classList.remove('ok'); b.innerText = c.toUpperCase() + ' Pendente'; b.disabled = false; b.style.opacity = '1'; }
-    });
-}
-
-function mudarStatusEmissao(c) {
-    if (!lhAberta) return;
-    if (statusEmissoes[lhAberta] && statusEmissoes[lhAberta][c]) return;
-    statusEmissoes[lhAberta]    = statusEmissoes[lhAberta] || {};
-    statusEmissoes[lhAberta][c] = true;
-    atualizarBotoesWorkflow(lhAberta);
-    atualizarDashboard(); renderizarPendencias();
-    toast(c.toUpperCase() + ' registrado!');
-    google.script.run
-        .withSuccessHandler(function(res) {
-            var r; try { r = JSON.parse(res); } catch(e) {}
-            if (r && !r.sucesso) { statusEmissoes[lhAberta][c] = false; atualizarBotoesWorkflow(lhAberta); toast('Erro ao salvar ' + c.toUpperCase() + ': ' + r.erro, 'erro'); }
-        })
-        .withFailureHandler(function() { statusEmissoes[lhAberta][c] = false; atualizarBotoesWorkflow(lhAberta); toast('Erro ao salvar ' + c.toUpperCase(), 'erro'); })
-        .gravarStatusEmissao(lhAberta, c, usuarioAtual);
-}
-
-// ── WHATSAPP ──
-function enviarWpp() {
-    var tel       = String(document.getElementById('res-tel').innerText).replace(/\D/g,'');
-    var motorista = document.getElementById('res-mot').innerText;
-    var rota      = document.getElementById('res-rota').innerText;
-    if (tel.length < 10) return toast('Número de telefone inválido', 'erro');
-    if (!tel.startsWith('55')) tel = '55' + tel;
-    var msg = 'Olá *' + motorista + '*, sua carga LH *' + lhAberta + '* para a rota *' + rota + '* está com a documentação liberada! Boa viagem.';
-    window.open('https://wa.me/' + tel + '?text=' + encodeURIComponent(msg), '_blank');
-    toast('WhatsApp aberto!');
-}
-
-// ── AUDITORIA ──
-function abrirAuditoria() { document.getElementById('modalAuditoria').style.display = 'block'; carregarLogs(null, null); }
-function fecharAuditoria() { document.getElementById('modalAuditoria').style.display = 'none'; }
-
-function filtrarLogs() {
-    var di = document.getElementById('audit-inicio').value;
-    var df = document.getElementById('audit-fim').value;
-    function toBR(s) { if (!s) return null; var p = s.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
-    carregarLogs(toBR(di), toBR(df));
-}
-
-function carregarLogs(dataInicio, dataFim) {
-    document.getElementById('tabela-logs').innerHTML = "<tr><td colspan='5' style='padding:20px;color:var(--text-muted);'>⏳ Carregando...</td></tr>";
-    google.script.run
-        .withSuccessHandler(function(res) {
-            var r; try { r = JSON.parse(res); } catch(e) { r = { sucesso: false }; }
-            if (!r.sucesso || !r.dados || r.dados.length === 0) {
-                document.getElementById('tabela-logs').innerHTML = "<tr><td colspan='5' style='padding:20px;color:var(--text-muted);'>Nenhum registro encontrado.</td></tr>"; return;
-            }
-            logsCache = r.dados; renderizarTabelaLogs(r.dados);
-        })
-        .withFailureHandler(function() { document.getElementById('tabela-logs').innerHTML = "<tr><td colspan='5' style='padding:20px;color:var(--red);'>Falha ao carregar logs.</td></tr>"; })
-        .buscarLogs(dataInicio, dataFim);
-}
-
-function renderizarTabelaLogs(logs) {
-    document.getElementById('tabela-logs').innerHTML = logs.map(function(l) {
-        var resultado = l[4] || 'SUCESSO';
-        return '<tr>' +
-            '<td class="mono" style="font-size:0.8rem;color:var(--text-muted)">' + (l[0]||'') + '</td>' +
-            '<td><strong>' + (l[1]||'') + '</strong></td>' +
-            '<td style="color:var(--green);font-weight:600;">' + (l[2]||'') + '</td>' +
-            '<td class="mono text-muted">' + (l[3]||'') + '</td>' +
-            '<td style="color:' + (resultado==='SUCESSO'?'var(--green)':'var(--red)') + ';font-size:0.78rem;font-weight:700;">' + resultado + '</td>' +
-        '</tr>';
-    }).join('');
-}
-
-function exportarLogs() {
-    if (!logsCache || logsCache.length === 0) { toast('Nenhum dado para exportar.', 'erro'); return; }
-    var header = ['DATA/HORA','USUÁRIO','AÇÃO','LH TRIP','RESULTADO'];
-    var csv = [header.join(';')].concat(logsCache.map(function(l) { return l.map(function(cel) { return '"' + String(cel||'').replace(/"/g,'""') + '"'; }).join(';'); })).join('\n');
-    var blob = new Blob(['\ufeff'+csv], { type: 'text/csv;charset=utf-8;' });
-    var url = URL.createObjectURL(blob); var a = document.createElement('a');
-    a.href = url; a.download = 'auditoria_' + new Date().toISOString().split('T')[0] + '.csv'; a.click();
-    URL.revokeObjectURL(url); toast('CSV exportado!');
-}
-
-// ── RELATÓRIO TURNO ──
-function gerarRelatorioTurno() {
-    var dt = document.getElementById('dataInput').value;
-    var dtFormatada = dt.split('-').reverse().join('/');
-    var regDia = filtrarPorData(dadosPlanilha, dt);
-    var canc = regDia.filter(function(r) { return isCancelada(r); });
-    var emit = regDia.filter(function(r) {
-        var lhV = r[2] ? String(r[2]).trim() : '';
-        var s   = statusEmissoes[lhV] || {};
-        if (isCancelada(r)) return false;
-        return s.cte && s.manifesto && s.pedagio && s.ciot;
-    });
-    var total = regDia.length;
-    var pctEmit = total > 0 ? Math.round((emit.length / total) * 100) : 0;
-    var pctCanc = total > 0 ? Math.round((canc.length / total) * 100) : 0;
-    var contagem = {};
-    emit.forEach(function(r) {
-        var lhV     = r[2] ? String(r[2]).trim() : '';
-        var s       = statusEmissoes[lhV] || {};
-        var emissor = s.auditoria ? String(s.auditoria).split('|')[0].trim() : 'DESCONHECIDO';
-        contagem[emissor] = (contagem[emissor]||0) + 1;
-    });
-    var topOp = '—', maxQtd = 0;
-    for (var op in contagem) { if (contagem[op] > maxQtd) { maxQtd = contagem[op]; topOp = op; } }
-    var txt = '📊 *FECHAMENTO DE TURNO — ' + dtFormatada + '*\n\n';
-    txt += '🚚 *Cargas Ofertadas:* ' + total + '\n';
-    txt += '✅ *LHs Emitidas:* ' + emit.length + ' (' + pctEmit + '%)\n';
-    txt += '❌ *LHs Canceladas:* ' + canc.length + ' (' + pctCanc + '%)\n\n';
-    txt += maxQtd > 0 ? '🏆 *Destaque:* ' + topOp + ' (' + maxQtd + ' emissões)\n' : '🏆 *Destaque:* —\n';
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(txt).then(function() { toast('Relatório copiado!'); }).catch(function() { _copiarFallback(txt); });
-    } else { _copiarFallback(txt); }
-}
-
-function _copiarFallback(text) {
-    var ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0;'; document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy') ? toast('Relatório copiado!') : toast('Não foi possível copiar.', 'erro'); } catch(e) { toast('Erro ao copiar.', 'erro'); }
-    document.body.removeChild(ta);
-}
-
-function abrirTV() { window.open(window.location.href.split("?")[0] + "?page=tv", "_blank"); }
-
-function toggleArea(id) {
-    var el = document.getElementById(id);
-    var show = el.style.display !== 'block';
-    el.style.display = show ? 'block' : 'none';
-    if (show && id === 'listaVolumeDiaArea') renderizarVolumeDia();
-}
-
-// ── OBSERVAÇÕES ──
-function carregarObservacoes() {
-    if (typeof google === 'undefined' || !google.script) return;
-    google.script.run
-        .withSuccessHandler(function(res) {
-            var r; try { r = (typeof res === 'string') ? JSON.parse(res) : res; } catch(e) { return; }
-            if (r && r.sucesso) { observacoes = r.dados || {}; renderizarPendencias(); }
-        })
-        .buscarObservacoes();
-}
-
-function preencherObsNaFicha(lh) {
-    var info = observacoes[lh] || {};
-    document.getElementById('obs-textarea').value = info.obs || '';
-    document.getElementById('chk-parada').checked = info.parada || false;
-    _obsModificado = false; _atualizarBtnSalvar();
-    var box = document.getElementById('obsBox');
-    if (info.parada) box.classList.add('parada'); else box.classList.remove('parada');
-    document.getElementById('obs-meta').textContent = (info.usuario && info.dataHora) ? info.usuario + ' · ' + info.dataHora : '';
-}
-
-function obsChanged() { _obsModificado = true; _atualizarBtnSalvar(); }
-
-function toggleParada() {
-    _obsModificado = true;
-    var box = document.getElementById('obsBox');
-    if (document.getElementById('chk-parada').checked) box.classList.add('parada'); else box.classList.remove('parada');
-    _atualizarBtnSalvar();
-}
-
-function _atualizarBtnSalvar() {
-    var btn = document.getElementById('btn-salvar-obs');
-    btn.disabled = !_obsModificado; btn.style.opacity = _obsModificado ? '1' : '0.4'; btn.style.cursor = _obsModificado ? 'pointer' : 'not-allowed';
-}
-
-function salvarObservacao() {
-    if (!lhAberta) return;
-    var obs = document.getElementById('obs-textarea').value.trim();
-    var parada = document.getElementById('chk-parada').checked;
-    var btn = document.getElementById('btn-salvar-obs');
-    btn.innerText = 'Salvando...'; btn.disabled = true; btn.style.opacity = '0.4';
-    google.script.run
-        .withSuccessHandler(function(res) {
-            var r; try { r = (typeof res === 'string') ? JSON.parse(res) : res; } catch(e) {}
-            if (r && r.sucesso) {
-                if (!obs && !parada) { delete observacoes[lhAberta]; }
-                else { observacoes[lhAberta] = { obs: obs, parada: parada, usuario: usuarioAtual, dataHora: new Date().toLocaleString('pt-BR') }; }
-                _obsModificado = false; preencherObsNaFicha(lhAberta); renderizarPendencias();
-                toast(parada ? '⛔ Emissão marcada como PARADA!' : '✓ Observação salva!', parada ? 'erro' : '');
-            } else { toast('Erro ao salvar observação.', 'erro'); btn.innerText = 'Salvar'; btn.disabled = false; btn.style.opacity = '1'; }
-        })
-        .withFailureHandler(function() { toast('Erro de conexão ao salvar.', 'erro'); btn.innerText = 'Salvar'; btn.disabled = false; btn.style.opacity = '1'; })
-        .salvarObservacao(lhAberta, obs, parada, usuarioAtual);
-}
+  function openSalesModal(){document.getElementById('sales-modal').classList.add('active');}
+  function closeSalesModal(){document.getElementById('sales-modal').classList.remove('active');}
+  document.getElementById('sales-modal').addEventListener('click',function(e){if(e.target===this)closeSalesModal();});
+  function toggleMobNav(){var n=document.getElementById('mob-nav');if(n.style.display==='flex'){n.style.display='none';n.classList.remove('open');}else{n.style.display='flex';n.classList.add('open');}}
+  function closeMobNav(){var n=document.getElementById('mob-nav');n.style.display='none';n.classList.remove('open');}
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeSalesModal();closeMobNav();}});
+  document.addEventListener('click',function(e){var n=document.getElementById('mob-nav');var b=document.querySelector('.mob-menu-btn');if(n&&b&&!n.contains(e.target)&&!b.contains(e.target))closeMobNav();});
+  document.querySelectorAll('a[href^="#"]').forEach(function(l){l.addEventListener('click',function(e){var id=this.getAttribute('href');if(id==='#')return;var el=document.querySelector(id);if(el){e.preventDefault();var top=el.getBoundingClientRect().top+window.scrollY-80;window.scrollTo({top:top,behavior:'smooth'});}});});
+  window.addEventListener('scroll',function(){var h=document.querySelector('header');h.style.boxShadow=window.scrollY>20?'0 4px 32px rgba(0,0,0,0.5)':'none';});
 </script>
 </body>
 </html>
